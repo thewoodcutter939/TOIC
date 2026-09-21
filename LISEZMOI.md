@@ -34,6 +34,22 @@ et elle fonctionne **sans connexion** après la première ouverture.
 
 Sur iPhone : ouvre l'adresse dans **Safari** → bouton Partager → **Sur l'écran d'accueil**.
 
+## Profils
+
+Plusieurs personnes peuvent utiliser la même appli : en haut de l'accueil, la ligne
+**Profil** permet d'ajouter quelqu'un (bouton +), de changer de personne d'un appui,
+de renommer ou de supprimer. Chaque profil a ses propres scores et statistiques.
+
+## Synchroniser PC et téléphone
+
+- **QR code** : sur le PC, *Exporter mes données* affiche un QR code. Scanne-le avec
+  l'appareil photo du téléphone : la page s'ouvre et propose d'importer.
+- **Automatique** : crée un dépôt GitHub **privé** (par exemple `toeic-progression`) et un
+  jeton d'accès (Settings → Developer settings → Personal access tokens → Fine-grained,
+  limité à ce dépôt, *Contents : Read and write*). Colle les deux dans l'appli, sur chaque
+  appareil : la progression se synchronise à l'ouverture et à la fin de chaque série.
+  Le jeton reste dans le navigateur de l'appareil ; ne le mets pas sur un appareil partagé.
+
 ## Bon à savoir
 
 - Le dépôt est public : n'importe qui ayant l'adresse peut ouvrir l'appli. Il n'y a
@@ -42,5 +58,5 @@ Sur iPhone : ouvre l'adresse dans **Safari** → bouton Partager → **Sur l'éc
   d'une version à l'autre, utilise **Exporter mes données** / **Importer un code**
   sur la page d'accueil de l'appli.
 - **Pour mettre l'appli à jour plus tard** : remplace `index.html` sur GitHub, et dans
-  `sw.js` change `objectif990-v1` en `objectif990-v2`. Sans ça, le téléphone continue
+  `sw.js` change `objectif990-vN` en `objectif990-v(N+1)`. Sans ça, le téléphone continue
   d'afficher la version gardée en mémoire.
