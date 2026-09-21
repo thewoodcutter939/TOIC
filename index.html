@@ -274,6 +274,10 @@ details.rule div b{color:var(--text)}
 .qrwrap{display:grid;gap:8px;justify-items:start}
 .qrbox{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;line-height:0}
 .qrbox svg{width:100%;max-width:240px;height:auto;display:block}
+.qrwrap.big{justify-items:center;width:100%}
+.qrwrap.big .qrbox{padding:14px}
+.qrwrap.big .qrbox svg{max-width:min(340px,80vw)}
+.qrwrap.big .bkhint{max-width:44ch;text-align:center}
 .recv{border-color:#F0D65A;background:#FFFBE8}
 .recv .ptitle{color:#7A6200}
 
@@ -1298,6 +1302,16 @@ function renderBackup(){
       ${(()=>{ const svg = qrSvg(shareUrl(bkp.code));
         return svg ? `<div class="qrwrap"><div class="qrbox">${svg}</div><p class="bkhint">Ou scanne ce QR code avec l'appareil photo de l'autre appareil : la page s'ouvre et propose d'importer cette progression.</p></div>`
                    : `<p class="bkhint">Progression trop longue pour un QR code : utilise le copier-coller ou la synchronisation GitHub.</p>`; })()}`;
+  } else if(bkp.mode === "qr"){
+    const svg = qrSvg(shareUrl(bkp.code));
+    inner = svg
+      ? `<div class="qrwrap big"><div class="qrbox">${svg}</div>
+         <p class="bkhint">Scanne ce code avec l'appareil photo de l'autre appareil : l'appli s'ouvre et propose d'importer la progression du profil <b>${escHtml(curProfile().name)}</b>.</p></div>
+         <div class="bkrow"><button class="btn sm" type="button" id="bk-out2">Voir le code en texte</button>
+         <button class="btn sm" type="button" id="bk-close">Fermer</button></div>`
+      : `<p class="bkhint">Progression trop longue pour un QR code : passe par le code en texte ou la synchronisation GitHub.</p>
+         <div class="bkrow"><button class="btn sm" type="button" id="bk-out2">Voir le code en texte</button>
+         <button class="btn sm" type="button" id="bk-close">Fermer</button></div>`;
   } else if(bkp.mode === "in"){
     inner = `<label class="bklab" for="bk-in">Collez ici le code exporté depuis l'autre version.</label>
       <textarea id="bk-in" class="bkta" rows="4" spellcheck="false" placeholder="O990Z..."></textarea>
@@ -1307,6 +1321,7 @@ function renderBackup(){
       <p class="bkhint"><b>Fusionner</b> : ajoute la progression du code à celle d'ici (meilleur score gardé pour chaque série). <b>Remplacer</b> : efface la progression d'ici et met celle du code à la place.</p>`;
   } else {
     inner = `<div class="bkrow"><button class="btn sm primary" type="button" id="bk-exp">Exporter mes données</button>
+      <button class="btn sm" type="button" id="bk-qr">QR de transfert</button>
       <button class="btn sm" type="button" id="bk-imp">Importer un code</button></div>`;
   }
   return `<div class="panel bkpanel">
@@ -1325,6 +1340,13 @@ function bindBackup(){
     renderHome();
   });
   on("bk-imp", ()=>{ bkp = {mode:"in", msg:"", code:""}; renderHome(); });
+  on("bk-qr", async ()=>{
+    try{ bkp = {mode:"qr", msg:"", code: await packStore()}; }
+    catch(e){ bkp = {mode:null, msg:"QR impossible : "+e.message, code:""}; }
+    renderHome();
+    const box = app.querySelector(".qrwrap"); if(box) box.scrollIntoView({block:"center"});
+  });
+  on("bk-out2", ()=>{ bkp.mode = "out"; renderHome(); });
   on("bk-close", ()=>back(""));
   on("bk-copy", async ()=>{
     const ta = app.querySelector("#bk-out"); if(!ta) return;
