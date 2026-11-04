@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1720">
+<meta name="description" content="Suivi de portefeuille boursier avec signaux d'achat et de vente issus de l'analyse technique.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mes placements">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mes placements</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EEF1F5; --line:#DFE4EB;
+  --text:#121A24; --muted:#5E6B7C; --faint:#8C97A6;
+  --accent:#2F5BEA; --accent-ink:#FFFFFF;
+  --up:#13834F; --up-bg:#E3F4EA; --down:#C8352F; --down-bg:#FBE7E5;
+  --neutral-bg:#E9EDF2;
+  --c-sma20:#E39B21; --c-sma50:#2F5BEA; --c-sma200:#8A3FD1; --c-boll:#94A3B8;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0B1118; --surface:#121A24; --surface2:#1A2430; --line:#26323F;
+    --text:#E7ECF2; --muted:#98A4B3; --faint:#6B7787;
+    --accent:#6E8EFF; --accent-ink:#0B1118;
+    --up:#3DCB86; --up-bg:#12301F; --down:#FF6B61; --down-bg:#3A1714;
+    --neutral-bg:#1E2833;
+    --c-sma20:#F2B544; --c-sma50:#6E8EFF; --c-sma200:#C08BFF; --c-boll:#5D6B7D;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0B1118; --surface:#121A24; --surface2:#1A2430; --line:#26323F;
+  --text:#E7ECF2; --muted:#98A4B3; --faint:#6B7787;
+  --accent:#6E8EFF; --accent-ink:#0B1118;
+  --up:#3DCB86; --up-bg:#12301F; --down:#FF6B61; --down-bg:#3A1714;
+  --neutral-bg:#1E2833;
+  --c-sma20:#F2B544; --c-sma50:#6E8EFF; --c-sma200:#C08BFF; --c-boll:#5D6B7D;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  padding-top:env(safe-area-inset-top)}
+header.top .wrap{display:flex;align-items:center;gap:10px;height:56px}
+header.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stamp{font-size:12px;color:var(--muted);white-space:nowrap}
+.iconbtn{border:0;background:transparent;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;cursor:pointer;color:var(--text)}
+.iconbtn:hover{background:var(--surface2)}
+.iconbtn svg{width:22px;height:22px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .wrap{display:flex;padding:0}
+nav.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 9px;color:var(--muted);
+  text-decoration:none;font-size:11.5px;font-weight:600}
+nav.tabs a svg{width:23px;height:23px}
+nav.tabs a.on{color:var(--accent)}
+main{padding:16px 0 24px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:22px 0 8px;font-weight:700}
+h2:first-child{margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.pad{padding:16px}
+.hero .big{font-size:30px;font-weight:750;letter-spacing:-.02em}
+.hero .row{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px;font-size:14px}
+.hero .lbl{color:var(--muted);font-size:12px}
+.up{color:var(--up)} .down{color:var(--down)}
+.list{list-style:none;margin:0;padding:0}
+.list li{border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.item{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:13px 16px;cursor:pointer;text-decoration:none;color:inherit}
+.item:hover{background:var(--surface2)}
+.item .name{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .sub{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .right{text-align:right}
+.item .val{font-weight:650}
+.item.withspark{grid-template-columns:1fr 72px auto}
+.spark{width:72px;height:28px;grid-row:span 2}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.v-strong_buy,.v-buy{background:var(--up-bg);color:var(--up)}
+.v-strong_sell,.v-sell{background:var(--down-bg);color:var(--down)}
+.v-neutral{background:var(--neutral-bg);color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+.chip.buy{border-color:color-mix(in srgb,var(--up) 45%,transparent);color:var(--up)}
+.chip.sell{border-color:color-mix(in srgb,var(--down) 45%,transparent);color:var(--down)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);
+  border-radius:10px;padding:10px 14px;font-weight:650;cursor:pointer;text-decoration:none;color:var(--text)}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--down)}
+.btn.block{width:100%}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+.warn{background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+label.f{display:block;margin:12px 0 4px;font-size:13px;font-weight:650;color:var(--muted)}
+input.f,select.f,textarea.f{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-height:44px}
+input.f:focus,select.f:focus,textarea.f:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* Détail */
+.dhead{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.dhead .px{font-size:28px;font-weight:750;letter-spacing:-.02em}
+.verdict{display:flex;align-items:center;gap:14px}
+.gauge{flex:1;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--down),var(--neutral-bg) 50%,var(--up));position:relative}
+.gauge i{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--surface);border:3px solid var(--text);transform:translate(-50%,-50%)}
+.reasons{list-style:none;padding:0;margin:12px 0 0}
+.reasons li{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.reasons li:first-child{border-top:0}
+.dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:7px;background:var(--faint)}
+.dot.p{background:var(--up)} .dot.n{background:var(--down)}
+.seg{display:inline-flex;background:var(--surface2);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 11px;border-radius:8px;font-size:13px;font-weight:650;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;padding:10px 12px}
+.toggles{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px}
+.toggles label{display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--muted)}
+.toggles i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.chart{width:100%;position:relative}
+.panelbl{font-size:11.5px;color:var(--muted);padding:6px 12px 0;font-weight:650}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th{text-align:left;font-weight:650;color:var(--muted);font-size:12px;padding:8px 12px;border-bottom:1px solid var(--line)}
+table.t td{padding:8px 12px;border-top:1px solid var(--line)}
+table.t td.r,table.t th.r{text-align:right}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.levels div{padding:12px 16px;border-top:1px solid var(--line)}
+.levels b{display:block;font-size:16px}
+.levels span{font-size:12px;color:var(--muted)}
+/* Feuille modale */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height:92vh;overflow:auto}
+@media (min-width:640px){.sheet-bg{align-items:center}.sheet{border-radius:18px}}
+.sheet h3{margin:0 0 4px;font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);
+  padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+.hidden{display:none!important}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;background:var(--surface2);padding:1px 5px;border-radius:5px}
+ol.steps{padding-left:20px;margin:8px 0}
+ol.steps li{margin:6px 0}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <button class="iconbtn hidden" id="back" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <h1 id="title">Mes placements</h1>
+  <span class="stamp" id="stamp"></span>
+  <button class="iconbtn" id="refresh" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+</div></header>
+
+<main><div class="wrap" id="view"></div></main>
+
+<nav class="tabs"><div class="wrap">
+  <a href="#/portefeuille" data-tab="portefeuille"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 6V4H8v2"/><path d="M3 12h18"/></svg>Portefeuille</a>
+  <a href="#/signaux" data-tab="signaux"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Signaux</a>
+  <a href="#/alertes" data-tab="alertes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Alertes</a>
+  <a href="#/reglages" data-tab="reglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Réglages</a>
+</div></nav>
+
+<script src="vendor/lightweight-charts.js"></script>
+<script src="indicators.js"></script>
+<script>
+"use strict";
+/* ================= État et stockage ================= */
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem("bourse." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("bourse." + k, JSON.stringify(v)); } catch {} },
+};
+const S = {
+  index: null,          // data/index.json
+  alertes: null,        // data/alertes.json
+  series: {},           // symbole -> données complètes
+  positions: LS.get("positions", []),
+  cfg: Object.assign(guessRepo(), LS.get("cfg", {})),
+  chartPrefs: LS.get("chart", { range: 250, sma20: false, sma50: true, sma200: true, boll: false }),
+};
+function guessRepo() {
+  const h = location.hostname, seg = location.pathname.split("/").filter(Boolean);
+  if (h.endsWith(".github.io")) return { owner: h.replace(".github.io", ""), repo: seg[0] || "", branch: "main", token: "" };
+  return { owner: "", repo: "", branch: "main", token: "" };
+}
+const savePositions = () => LS.set("positions", S.positions);
+const saveCfg = () => LS.set("cfg", S.cfg);
+
+/* ================= Outils ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fileName = sym => sym.replace(/[^A-Za-z0-9.-]/g, "_") + ".json";
+function money(x, cur) {
+  if (x == null || !isFinite(x)) return "—";
+  const digits = Math.abs(x) < 10 ? 3 : 2;
+  if (cur === "GBp") return x.toLocaleString("fr-FR", { maximumFractionDigits: digits }) + " p";
+  try { return x.toLocaleString("fr-FR", { style: "currency", currency: cur || "EUR", maximumFractionDigits: digits, minimumFractionDigits: Math.min(2, digits) }); }
+  catch { return x.toLocaleString("fr-FR", { maximumFractionDigits: digits }) + " " + (cur || ""); }
+}
+const num = (x, d = 2) => (x == null || !isFinite(x) ? "—" : x.toLocaleString("fr-FR", { maximumFractionDigits: d }));
+const pct = (x, sign = true) => (x == null || !isFinite(x) ? "—" : (sign && x > 0 ? "+" : "") + (x * 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %");
+const cls = x => (x > 0 ? "up" : x < 0 ? "down" : "");
+const dateFR = t => new Date(t * 1000).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+function ago(iso) {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 1) return "à l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  if (m < 60 * 24) return `il y a ${Math.round(m / 60)} h`;
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+function toast(msg, ms = 3200) {
+  const d = document.createElement("div"); d.className = "toast"; d.textContent = msg;
+  document.body.appendChild(d); setTimeout(() => d.remove(), ms);
+}
+const fx = cur => (!cur || cur === "EUR" ? 1 : (S.index && S.index.change && S.index.change[cur]) || null);
+const titre = sym => (S.index && S.index.titres.find(t => t.symbole === sym)) || null;
+const inWatchlist = sym => !!titre(sym);
+
+function spark(vals, up) {
+  if (!vals || vals.length < 2) return "";
+  const w = 72, h = 28, mn = Math.min(...vals), mx = Math.max(...vals), r = mx - mn || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 2 - (v - mn) / r * (h - 4)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--${up ? "up" : "down"})" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+const pill = (key, label) => `<span class="pill v-${esc(key)}">${esc(label)}</span>`;
+
+/* ================= Données ================= */
+function dataBases() {
+  const b = [];
+  const { owner, repo, branch } = S.cfg;
+  if (owner && repo) b.push(`https://raw.githubusercontent.com/${owner}/${repo}/${branch || "main"}/bourse/data/`);
+  b.push("data/");
+  return b;
+}
+async function getData(file) {
+  const bust = "?t=" + Math.floor(Date.now() / 60000);
+  let err;
+  for (const base of dataBases()) {
+    try {
+      const r = await fetch(base + file + bust, { cache: "no-store" });
+      if (r.ok) return await r.json();
+      err = new Error("HTTP " + r.status);
+    } catch (e) { err = e; }
+  }
+  throw err;
+}
+async function loadIndex() {
+  try {
+    S.index = await getData("index.json");
+    LS.set("index", S.index);
+  } catch (e) {
+    S.index = S.index || LS.get("index", null);
+    if (!S.index) throw e;
+    toast("Hors connexion : derniers cours enregistrés affichés.");
+  }
+  S.series = {};
+  getData("alertes.json").then(a => { S.alertes = a; if (route().tab === "alertes") render(); }).catch(() => { S.alertes = S.alertes || { envoyees: [] }; });
+  $("#stamp").textContent = S.index ? "Cours " + ago(S.index.maj) : "";
+}
+async function loadSeries(sym) {
+  if (S.series[sym]) return S.series[sym];
+  const d = await getData("s/" + fileName(sym));
+  S.series[sym] = d;
+  return d;
+}
+
+/* ================= GitHub (modifier la liste suivie) ================= */
+const WL_PATH = "bourse/watchlist.json";
+function gh(path, opt = {}) {
+  const { owner, repo, token } = S.cfg;
+  return fetch(`https://api.github.com/repos/${owner}/${repo}/${path}`, {
+    ...opt,
+    headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, ...(opt.headers || {}) },
+  }).then(async r => {
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.message || "Erreur GitHub " + r.status);
+    return j;
+  });
+}
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+const b64enc = s => { let b = ""; for (const x of new TextEncoder().encode(s)) b += String.fromCharCode(x); return btoa(b); };
+async function editWatchlist(mutate, message) {
+  const br = S.cfg.branch || "main";
+  const f = await gh(`contents/${WL_PATH}?ref=${encodeURIComponent(br)}`);
+  const wl = JSON.parse(b64dec(f.content));
+  wl.titres = wl.titres || [];
+  mutate(wl);
+  const text = "{\n  \"titres\": [\n" + wl.titres.map(t => "    " + JSON.stringify(t)).join(",\n") + "\n  ]\n}\n";
+  await gh(`contents/${WL_PATH}`, { method: "PUT", body: JSON.stringify({ message, content: b64enc(text), sha: f.sha, branch: br }) });
+  return wl;
+}
+const canEdit = () => !!(S.cfg.owner && S.cfg.repo && S.cfg.token);
+const editUrl = () => (S.cfg.owner && S.cfg.repo) ? `https://github.com/${S.cfg.owner}/${S.cfg.repo}/edit/${S.cfg.branch || "main"}/${WL_PATH}` : "";
+
+/* ================= Navigation ================= */
+function route() {
+  const p = location.hash.replace(/^#\/?/, "").split("/");
+  if (p[0] === "titre" && p[1]) return { tab: "titre", sym: decodeURIComponent(p[1]) };
+  return { tab: ["portefeuille", "signaux", "alertes", "reglages"].includes(p[0]) ? p[0] : "portefeuille" };
+}
+let charts = [];
+function destroyCharts() { charts.forEach(c => c.remove()); charts = []; }
+function render() {
+  destroyCharts();
+  const r = route();
+  document.querySelectorAll("nav.tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === r.tab));
+  $("#back").classList.toggle("hidden", r.tab !== "titre");
+  const v = $("#view");
+  if (!S.index && r.tab !== "reglages") {
+    v.innerHTML = `<div class="card empty">Chargement des cours…</div>`;
+    return;
+  }
+  ({ portefeuille: viewPortfolio, signaux: viewSignals, alertes: viewAlerts, reglages: viewSettings, titre: viewDetail })[r.tab](v, r);
+  if (r.tab !== "titre") $("#title").textContent = { portefeuille: "Mon portefeuille", signaux: "Signaux", alertes: "Alertes", reglages: "Réglages" }[r.tab];
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+$("#back").onclick = () => (history.length > 1 ? history.back() : (location.hash = "#/signaux"));
+$("#refresh").onclick = async () => {
+  $("#refresh").disabled = true;
+  try { await loadIndex(); render(); toast("Cours actualisés."); } catch (e) { toast("Impossible de charger les cours : " + e.message); }
+  $("#refresh").disabled = false;
+};
+
+/* ================= Portefeuille ================= */
+function aggregate() {
+  const by = {};
+  for (const p of S.positions) {
+    const a = by[p.symbole] || (by[p.symbole] = { symbole: p.symbole, qte: 0, cout: 0, lignes: [] });
+    a.qte += +p.qte; a.cout += +p.qte * +p.pru; a.lignes.push(p);
+  }
+  return Object.values(by).map(a => {
+    const t = titre(a.symbole), cur = t ? t.devise : "EUR", rate = fx(cur);
+    const valeur = t ? a.qte * t.prix : null;
+    return { ...a, t, cur, rate, pru: a.qte ? a.cout / a.qte : 0, valeur,
+      pv: valeur != null ? valeur - a.cout : null,
+      jour: t ? a.qte * (t.prix - t.veille) : null };
+  });
+}
+function viewPortfolio(v) {
+  const rows = aggregate();
+  let tot = 0, cost = 0, day = 0, missing = 0;
+  for (const r of rows) {
+    if (r.valeur == null || r.rate == null) { missing++; continue; }
+    tot += r.valeur * r.rate; cost += r.cout * r.rate; day += r.jour * r.rate;
+  }
+  const pv = tot - cost;
+  const sells = rows.filter(r => r.t && /sell/.test(r.t.verdict));
+  const stops = rows.filter(r => r.t && r.t.niveaux && r.t.niveaux.stop && r.t.prix < r.t.niveaux.stop);
+  v.innerHTML = `
+    <div class="card pad hero">
+      <div class="lbl">Valeur totale</div>
+      <div class="big num">${money(tot, "EUR")}</div>
+      <div class="row num">
+        <div><div class="lbl">Plus-value</div><b class="${cls(pv)}">${money(pv, "EUR")}</b> <span class="${cls(pv)}">${cost ? pct(pv / cost) : ""}</span></div>
+        <div><div class="lbl">Aujourd'hui</div><b class="${cls(day)}">${money(day, "EUR")}</b> <span class="${cls(day)}">${tot - day ? pct(day / (tot - day)) : ""}</span></div>
+        <div><div class="lbl">Investi</div><b>${money(cost, "EUR")}</b></div>
+      </div>
+      ${missing ? `<p class="note">${missing} ligne(s) non comptée(s) : titre pas encore suivi ou devise sans taux de change.</p>` : ""}
+    </div>
+    ${sells.length || stops.length ? `<h2>À surveiller</h2><div class="card pad">
+      ${sells.map(r => `<div>• <a href="#/titre/${encodeURIComponent(r.symbole)}">${esc(r.t.nom)}</a> : avis technique <b class="down">${esc(r.t.verdictLabel)}</b>.</div>`).join("")}
+      ${stops.map(r => `<div>• <a href="#/titre/${encodeURIComponent(r.symbole)}">${esc(r.t.nom)}</a> est sous son stop suiveur (${money(r.t.niveaux.stop, r.cur)}).</div>`).join("")}
+    </div>` : ""}
+    <h2>Mes positions</h2>
+    <div class="card">${rows.length ? `<ul class="list">${rows.map(r => `<li><a class="item" href="#/titre/${encodeURIComponent(r.symbole)}">
+      <div class="name">${esc(r.t ? r.t.nom : r.symbole)}</div>
+      <div class="right val num">${r.valeur != null ? money(r.valeur, r.cur) : "—"}</div>
+      <div class="sub num">${num(r.qte, 4)} × ${r.t ? money(r.t.prix, r.cur) : "?"} · PRU ${money(r.pru, r.cur)}</div>
+      <div class="right sub num ${cls(r.pv)}">${r.pv != null ? (r.pv > 0 ? "+" : "") + money(r.pv, r.cur) + " · " + pct(r.pv / r.cout) : (inWatchlist(r.symbole) ? "" : "titre non suivi")}</div>
+      ${r.t && r.t.verdict ? `<div style="grid-column:1/-1">${pill(r.t.verdict, r.t.verdictLabel)}</div>` : ""}
+    </a></li>`).join("")}</ul>` : `<div class="empty">Aucune position pour l'instant.<br>Ajoute ce que tu possèdes pour suivre ta plus-value et recevoir des conseils adaptés.</div>`}</div>
+    <div class="btns"><button class="btn primary" id="addpos">+ Ajouter un achat</button></div>
+    ${S.positions.length ? `<h2>Détail des achats</h2><div class="card"><table class="t num"><thead><tr><th>Titre</th><th class="r">Qté</th><th class="r">Prix</th><th></th></tr></thead><tbody>
+      ${S.positions.map(p => `<tr><td>${esc((titre(p.symbole) || {}).nom || p.symbole)}<div class="note">${p.date ? new Date(p.date).toLocaleDateString("fr-FR") : ""}</div></td>
+      <td class="r">${num(+p.qte, 4)}</td><td class="r">${money(+p.pru, (titre(p.symbole) || {}).devise)}</td>
+      <td class="r"><button class="btn" data-edit="${esc(p.id)}" style="padding:6px 10px">Modifier</button></td></tr>`).join("")}
+    </tbody></table></div>` : ""}
+    <p class="note" style="margin-top:16px">Tes positions restent sur cet appareil (rien n'est envoyé). Sauvegarde-les depuis Réglages.</p>`;
+  $("#addpos").onclick = () => positionSheet();
+  v.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => positionSheet(S.positions.find(p => p.id === b.dataset.edit)));
+}
+
+function sheet(html, onMount) {
+  const bg = document.createElement("div");
+  bg.className = "sheet-bg";
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  bg.addEventListener("click", e => { if (e.target === bg) bg.remove(); });
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  onMount && onMount(bg.querySelector(".sheet"), close);
+  const first = bg.querySelector("input,select"); first && first.focus();
+  return close;
+}
+
+function positionSheet(p, presetSym) {
+  const syms = (S.index ? S.index.titres : []).map(t => t.symbole);
+  const sym0 = p ? p.symbole : presetSym || syms[0] || "";
+  sheet(`
+    <h3>${p ? "Modifier l'achat" : "Ajouter un achat"}</h3>
+    <label class="f" for="ps">Titre</label>
+    <select class="f" id="ps">${syms.map(s => `<option value="${esc(s)}" ${s === sym0 ? "selected" : ""}>${esc(titre(s).nom)} (${esc(s)})</option>`).join("")}
+      ${sym0 && !syms.includes(sym0) ? `<option selected value="${esc(sym0)}">${esc(sym0)}</option>` : ""}</select>
+    <p class="note">Le titre n'est pas dans la liste ? Ajoute-le d'abord dans l'onglet Signaux.</p>
+    <div class="grid2">
+      <div><label class="f" for="pq">Quantité</label><input class="f num" id="pq" inputmode="decimal" value="${p ? esc(p.qte) : ""}" placeholder="10"></div>
+      <div><label class="f" for="pp">Prix d'achat unitaire</label><input class="f num" id="pp" inputmode="decimal" value="${p ? esc(p.pru) : ""}" placeholder="${sym0 && titre(sym0) ? esc(String(titre(sym0).prix)) : ""}"></div>
+    </div>
+    <label class="f" for="pd">Date d'achat</label>
+    <input class="f" id="pd" type="date" value="${p && p.date ? esc(p.date) : new Date().toISOString().slice(0, 10)}">
+    <div class="btns">
+      <button class="btn primary" id="psave">Enregistrer</button>
+      ${p ? `<button class="btn danger" id="pdel">Supprimer</button>` : ""}
+      <button class="btn" id="pcancel">Annuler</button>
+    </div>`, (el, close) => {
+    const pq = el.querySelector("#pq"), pp = el.querySelector("#pp"), ps = el.querySelector("#ps");
+    ps.onchange = () => { const t = titre(ps.value); pp.placeholder = t ? t.prix : ""; };
+    el.querySelector("#pcancel").onclick = close;
+    el.querySelector("#psave").onclick = () => {
+      const q = parseFloat(pq.value.replace(",", ".")), pr = parseFloat(pp.value.replace(",", "."));
+      if (!ps.value || !(q > 0) || !(pr > 0)) { toast("Indique le titre, une quantité et un prix."); return; }
+      const rec = { id: p ? p.id : Math.random().toString(36).slice(2), symbole: ps.value, qte: q, pru: pr, date: el.querySelector("#pd").value };
+      if (p) S.positions[S.positions.findIndex(x => x.id === p.id)] = rec; else S.positions.push(rec);
+      savePositions(); close(); render();
+    };
+    const del = el.querySelector("#pdel");
+    if (del) del.onclick = () => { if (confirm("Supprimer cet achat ?")) { S.positions = S.positions.filter(x => x.id !== p.id); savePositions(); close(); render(); } };
+  });
+}
+
+/* ================= Signaux ================= */
+const ORDER = { strong_buy: 0, buy: 1, neutral: 2, sell: 3, strong_sell: 4 };
+function viewSignals(v) {
+  const list = [...S.index.titres].sort((a, b) => (b.score ?? -99) - (a.score ?? -99));
+  const held = new Set(S.positions.map(p => p.symbole));
+  const fresh = list.flatMap(t => (t.recent || []).filter(e => e.ago === 0).map(e => ({ t, e })));
+  v.innerHTML = `
+    ${fresh.length ? `<h2>Signaux du jour</h2><div class="card"><ul class="list">${fresh.map(({ t, e }) => `<li><a class="item" href="#/titre/${encodeURIComponent(t.symbole)}">
+      <div class="name"><span class="${e.side === "buy" ? "up" : "down"}">${e.side === "buy" ? "▲" : "▼"}</span> ${esc(t.nom)}</div><div class="right"><span class="chip ${e.side}">${e.side === "buy" ? "Achat" : "Vente"}</span></div>
+      <div class="sub">${esc(e.label)}${t.provisoire ? " · séance en cours" : ""}</div><div class="right sub num">${money(t.prix, t.devise)}</div></a></li>`).join("")}</ul></div>` : ""}
+    <h2>Titres suivis</h2>
+    <div class="card"><ul class="list">${list.map(t => `<li><a class="item withspark" href="#/titre/${encodeURIComponent(t.symbole)}">
+      <div class="name">${held.has(t.symbole) ? "● " : ""}${esc(t.nom)}</div>
+      ${spark(t.spark, (t.spark || [0, 0]).at(-1) >= (t.spark || [0, 0])[0])}
+      <div class="right val num">${money(t.prix, t.devise)}</div>
+      <div class="sub">${t.erreur ? `<span class="down">cours indisponible</span>` : pill(t.verdict, t.verdictLabel)} <span class="note">${esc(t.symbole)}</span></div>
+      <div class="right sub num ${cls(t.variation)}">${pct(t.variation)}</div>
+    </a></li>`).join("")}</ul></div>
+    <p class="note">● = tu détiens ce titre. Classement du plus haussier au plus baissier selon les graphiques.</p>
+    <div class="btns"><button class="btn primary" id="addsym">+ Suivre un titre</button></div>`;
+  $("#addsym").onclick = addSymbolSheet;
+}
+
+function addSymbolSheet() {
+  sheet(`
+    <h3>Suivre un nouveau titre</h3>
+    <p class="note">Utilise le code Yahoo Finance du titre. Cherche-le sur <a href="https://fr.finance.yahoo.com/" target="_blank" rel="noopener">fr.finance.yahoo.com</a> si besoin.</p>
+    <table class="t" style="margin:6px 0 4px"><tbody>
+      <tr><td>Bourse de Paris</td><td><code>AIR.PA</code>, <code>CW8.PA</code></td></tr>
+      <tr><td>États-Unis</td><td><code>AAPL</code>, <code>MSFT</code></td></tr>
+      <tr><td>Francfort · Amsterdam · Milan</td><td><code>SAP.DE</code>, <code>ASML.AS</code>, <code>ENI.MI</code></td></tr>
+      <tr><td>Cryptomonnaies</td><td><code>BTC-EUR</code>, <code>ETH-EUR</code></td></tr>
+      <tr><td>Indices</td><td><code>^FCHI</code> (CAC 40), <code>^GSPC</code> (S&amp;P 500)</td></tr>
+    </tbody></table>
+    <div class="grid2">
+      <div><label class="f" for="ns">Code</label><input class="f" id="ns" autocapitalize="characters" autocomplete="off" placeholder="SAN.PA"></div>
+      <div><label class="f" for="nn">Nom (facultatif)</label><input class="f" id="nn" placeholder="Sanofi"></div>
+    </div>
+    <div id="nsout"></div>
+    <div class="btns"><button class="btn primary" id="nsave">Ajouter</button><button class="btn" id="ncancel">Annuler</button></div>`,
+  (el, close) => {
+    el.querySelector("#ncancel").onclick = close;
+    el.querySelector("#nsave").onclick = async () => {
+      const sym = el.querySelector("#ns").value.trim().toUpperCase();
+      const nom = el.querySelector("#nn").value.trim();
+      if (!/^[\^A-Z0-9.=\-]{1,20}$/.test(sym)) { toast("Code invalide."); return; }
+      if (inWatchlist(sym)) { toast("Ce titre est déjà suivi."); return; }
+      const entry = nom ? { symbole: sym, nom } : { symbole: sym };
+      if (!canEdit()) {
+        el.querySelector("#nsout").innerHTML = manualEdit(`Ajoute cette ligne dans la liste <code>"titres"</code>, après la dernière ligne (sans oublier la virgule) :`, JSON.stringify(entry));
+        return;
+      }
+      try {
+        await editWatchlist(wl => wl.titres.push(entry), `bourse : suivre ${sym}`);
+        close();
+        toast("Ajouté. Les cours arrivent d'ici 1 à 2 minutes : appuie ensuite sur Actualiser.", 6000);
+      } catch (e) { toast("GitHub a refusé : " + e.message, 6000); }
+    };
+  });
+}
+function manualEdit(intro, line) {
+  const url = editUrl();
+  return `<div class="warn" style="margin-top:12px">
+    <b>Pour modifier la liste depuis l'appli</b>, enregistre un jeton GitHub dans Réglages. Sinon, fais-le à la main :
+    <ol class="steps"><li>${url ? `Ouvre <a href="${esc(url)}" target="_blank" rel="noopener">le fichier watchlist.json sur GitHub</a>.` : "Ouvre le fichier <code>bourse/watchlist.json</code> de ton dépôt sur GitHub."}</li>
+    <li>${intro}<br><code style="display:block;margin-top:6px;white-space:pre-wrap;word-break:break-all">${esc(line)}</code></li>
+    <li>Clique sur <b>Commit changes</b>. Le robot récupère les cours dans les 2 minutes.</li></ol></div>`;
+}
+
+/* ================= Détail d'un titre ================= */
+async function viewDetail(v, r) {
+  const t = titre(r.sym);
+  $("#title").textContent = t ? t.nom : r.sym;
+  if (!t) {
+    v.innerHTML = `<div class="card empty">Ce titre n'est pas encore suivi.<br><br><a class="btn" href="#/signaux">Suivre un titre</a></div>`;
+    return;
+  }
+  v.innerHTML = `<div class="card empty">Chargement du graphique…</div>`;
+  let d;
+  try { d = await loadSeries(r.sym); } catch (e) {
+    v.innerHTML = `<div class="card empty">Historique indisponible (${esc(e.message)}).</div>`; return;
+  }
+  if (route().sym !== r.sym) return;
+  const A = BourseTA.analyze(d.bougies);
+  const hist = BourseTA.history(A.I).sort((a, b) => b.n - a.n);
+  const pos = aggregate().find(x => x.symbole === r.sym);
+  const L = A.levels, cur = t.devise, last = A.I.c.at(-1);
+  const gaugePos = Math.max(0, Math.min(100, 50 + A.score / 6 * 50));
+  const events = BourseTA.allEvents(A.I).slice(-12).reverse();
+
+  let advice = "";
+  if (pos) {
+    const below = L.stop && last < L.stop;
+    advice = /sell/.test(A.verdict) || below
+      ? `Tu détiens ce titre. Les graphiques penchent vers la baisse : envisage d'alléger, ou de protéger ta position avec un ordre stop vers <b>${money(L.stop, cur)}</b>.`
+      : /buy/.test(A.verdict)
+        ? `Tu détiens ce titre et la tendance est favorable. Pour protéger tes gains, un stop suiveur se situerait vers <b>${money(L.stop, cur)}</b>.`
+        : `Tu détiens ce titre. Pas de signal net : conserver, avec un stop de sécurité vers <b>${money(L.stop, cur)}</b>.`;
+  }
+
+  v.innerHTML = `
+    <div class="dhead">
+      <div style="flex:1;min-width:180px">
+        <div class="px num">${money(last, cur)}</div>
+        <div class="num ${cls(t.variation)}">${pct(t.variation)} aujourd'hui${t.provisoire ? " · séance en cours" : ""}</div>
+        <div class="note">${esc(r.sym)} · ${esc(d.place || "")} · cours ${ago(t.maj || S.index.maj)}</div>
+      </div>
+      ${pill(A.verdict, A.verdictLabel)}
+    </div>
+
+    <h2>Ce que disent les graphiques</h2>
+    <div class="card pad">
+      <div class="verdict"><span class="note">Vente</span><div class="gauge"><i style="left:${gaugePos}%"></i></div><span class="note">Achat</span></div>
+      <ul class="reasons">
+        ${A.recent.map(e => `<li><span class="dot ${e.side === "buy" ? "p" : "n"}"></span><div><b>${esc(e.label)}</b> ${e.ago === 0 ? "aujourd'hui" : `il y a ${e.ago} séance${e.ago > 1 ? "s" : ""}`}<div class="note">${esc(e.why)}</div></div></li>`).join("")}
+        ${A.context.map(c => `<li><span class="dot ${c.s > 0 ? "p" : c.s < 0 ? "n" : ""}"></span><div>${esc(c.txt)}</div></li>`).join("")}
+      </ul>
+      ${advice ? `<div class="warn" style="margin-top:12px">${advice}</div>` : ""}
+    </div>
+
+    <h2>Graphique</h2>
+    <div class="card">
+      <div class="toolbar">
+        <div class="seg" id="ranges">${[[66, "3 M"], [130, "6 M"], [250, "1 an"], [500, "2 ans"], [1300, "5 ans"]].map(([n, l]) => `<button data-n="${n}" class="${S.chartPrefs.range === n ? "on" : ""}">${l}</button>`).join("")}</div>
+        <div class="toggles">
+          ${[["sma20", "MM20"], ["sma50", "MM50"], ["sma200", "MM200"], ["boll", "Bollinger"]].map(([k, l]) => `<label><input type="checkbox" data-k="${k}" ${S.chartPrefs[k] ? "checked" : ""}><i style="background:var(--c-${k === "boll" ? "boll" : k})"></i>${l}</label>`).join("")}
+        </div>
+      </div>
+      <div class="chart" id="c-main" style="height:320px"></div>
+      <div class="panelbl">RSI (14) — survente sous 30, surachat au-dessus de 70</div>
+      <div class="chart" id="c-rsi" style="height:110px"></div>
+      <div class="panelbl">MACD (12, 26, 9)</div>
+      <div class="chart" id="c-macd" style="height:120px"></div>
+      <p class="note" style="padding:0 12px 10px">▲ signal d'achat · ▼ signal de vente</p>
+    </div>
+
+    <h2>Niveaux clés</h2>
+    <div class="card levels num">
+      <div><span>Résistance (plus haut 55 j)</span><b>${money(L.resistance, cur)}</b></div>
+      <div><span>Support (plus bas 55 j)</span><b>${money(L.support, cur)}</b></div>
+      <div><span>Stop suiveur suggéré</span><b>${money(L.stop, cur)}</b></div>
+      <div><span>Moyenne 50 jours</span><b>${money(L.sma50, cur)}</b></div>
+      <div><span>Moyenne 200 jours</span><b>${money(L.sma200, cur)}</b></div>
+      <div><span>Volatilité (ATR 14)</span><b>${money(L.atr, cur)}</b></div>
+    </div>
+
+    ${pos ? `<h2>Ma position</h2><div class="card levels num">
+      <div><span>Quantité</span><b>${num(pos.qte, 4)}</b></div>
+      <div><span>Prix de revient</span><b>${money(pos.pru, cur)}</b></div>
+      <div><span>Valeur</span><b>${money(pos.valeur, cur)}</b></div>
+      <div><span>Plus-value</span><b class="${cls(pos.pv)}">${money(pos.pv, cur)} · ${pct(pos.pv / pos.cout)}</b></div>
+    </div>` : ""}
+    <div class="btns"><button class="btn" id="dadd">+ Ajouter un achat</button><button class="btn" id="dalert">Alertes de prix</button></div>
+
+    <h2>Ces signaux ont-ils marché sur ce titre ?</h2>
+    <div class="card">
+      ${hist.length ? `<table class="t num"><thead><tr><th>Signal (5 ans)</th><th class="r">Fois</th><th class="r">Réussite</th><th class="r">Variation à 20 j</th></tr></thead><tbody>
+        ${hist.map(h => `<tr><td><span class="${h.side === "buy" ? "up" : "down"}">${h.side === "buy" ? "▲" : "▼"}</span> ${esc(h.label)}</td><td class="r">${h.n}</td>
+          <td class="r ${h.ok / h.n >= 0.6 ? "up" : h.ok / h.n < 0.45 ? "down" : ""}">${Math.round(h.ok / h.n * 100)} %</td><td class="r ${cls(h.avg)}">${pct(h.avg)}</td></tr>`).join("")}
+      </tbody></table>` : `<div class="empty">Pas assez d'historique.</div>`}
+      <p class="note" style="padding:0 12px 12px">« Réussite » : le cours a monté dans les 20 séances suivant un signal d'achat (ou baissé après un signal de vente). Autour de 50 %, le signal ne vaut guère mieux qu'une pièce lancée sur ce titre : fie-toi plutôt à ceux qui ont bien marché, et aux signaux qui vont dans le même sens.</p>
+    </div>
+
+    <h2>Derniers signaux</h2>
+    <div class="card">${events.length ? `<table class="t num"><tbody>${events.map(e => `<tr><td>${dateFR(e.t)}</td><td><span class="${e.side === "buy" ? "up" : "down"}">${e.side === "buy" ? "▲" : "▼"}</span> ${esc(e.label)}</td><td class="r">${money(e.price, cur)}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">Aucun signal.</div>`}</div>
+    <p class="note" style="margin-top:16px">Aide à la décision fondée uniquement sur l'analyse technique des graphiques. Ce n'est pas un conseil en investissement : les signaux se trompent souvent, et les résultats passés ne préjugent pas des résultats futurs.</p>`;
+
+  $("#dadd").onclick = () => positionSheet(null, r.sym);
+  $("#dalert").onclick = () => priceAlertSheet(t);
+  drawCharts(A, t);
+  $("#ranges").onclick = e => {
+    const n = +e.target.dataset.n; if (!n) return;
+    S.chartPrefs.range = n; LS.set("chart", S.chartPrefs);
+    document.querySelectorAll("#ranges button").forEach(b => b.classList.toggle("on", +b.dataset.n === n));
+    setRange(A.I.c.length, n);
+  };
+  v.querySelectorAll(".toggles input").forEach(cb => cb.onchange = () => {
+    S.chartPrefs[cb.dataset.k] = cb.checked; LS.set("chart", S.chartPrefs);
+    destroyCharts(); drawCharts(A, t);
+  });
+}
+
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function setRange(n, k) { charts.forEach(c => c.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - k), to: n + 2 })); }
+function drawCharts(A, t) {
+  const I = A.I, LW = window.LightweightCharts;
+  if (!LW) { $("#c-main").innerHTML = `<div class="empty">Graphique indisponible.</div>`; return; }
+  const base = () => ({
+    autoSize: true,
+    layout: { background: { color: "transparent" }, textColor: css("--muted"), fontSize: 11, fontFamily: "system-ui,sans-serif" },
+    grid: { vertLines: { color: css("--line") + "66" }, horzLines: { color: css("--line") + "66" } },
+    rightPriceScale: { borderColor: css("--line"), minimumWidth: 64 },
+    timeScale: { borderColor: css("--line"), rightOffset: 2 },
+    crosshair: { mode: 0 },
+    localization: { locale: "fr-FR", priceFormatter: p => num(p, Math.abs(p) < 10 ? 3 : 2) },
+    handleScale: { axisPressedMouseMove: false },
+  });
+  const series = arr => I.t.map((time, i) => (arr[i] == null ? { time } : { time, value: arr[i] }));
+  const up = css("--up"), down = css("--down");
+
+  const main = LW.createChart($("#c-main"), base());
+  const candles = main.addCandlestickSeries({ upColor: up, downColor: down, borderVisible: false, wickUpColor: up, wickDownColor: down });
+  candles.setData(I.t.map((time, i) => ({ time, open: I.o[i], high: I.h[i], low: I.l[i], close: I.c[i] })));
+  const line = (arr, color, w = 1.5, dash = 0) => {
+    const s = main.addLineSeries({ color, lineWidth: w, lineStyle: dash, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    s.setData(series(arr)); return s;
+  };
+  const P = S.chartPrefs;
+  if (P.boll) { line(I.boll.up, css("--c-boll"), 1, 2); line(I.boll.lo, css("--c-boll"), 1, 2); }
+  if (P.sma20) line(I.sma20, css("--c-sma20"));
+  if (P.sma50) line(I.sma50, css("--c-sma50"));
+  if (P.sma200) line(I.sma200, css("--c-sma200"), 2);
+  if (A.levels.stop) candles.createPriceLine({ price: A.levels.stop, color: down, lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: "stop" });
+  candles.setMarkers(BourseTA.allEvents(I).filter(e => e.w >= 1.5).map(e => ({
+    time: e.t, position: e.side === "buy" ? "belowBar" : "aboveBar", color: e.side === "buy" ? up : down,
+    shape: e.side === "buy" ? "arrowUp" : "arrowDown", text: "",
+  })));
+
+  const rc = LW.createChart($("#c-rsi"), base());
+  const rs = rc.addLineSeries({ color: css("--accent"), lineWidth: 1.5, priceLineVisible: false });
+  rs.setData(series(I.rsi));
+  [30, 70].forEach(p => rs.createPriceLine({ price: p, color: css("--faint"), lineWidth: 1, lineStyle: 2, axisLabelVisible: false }));
+
+  const mc = LW.createChart($("#c-macd"), base());
+  const hs = mc.addHistogramSeries({ priceLineVisible: false, lastValueVisible: false });
+  hs.setData(I.t.map((time, i) => (I.macd.hist[i] == null ? { time } : { time, value: I.macd.hist[i], color: (I.macd.hist[i] >= 0 ? up : down) + "88" })));
+  mc.addLineSeries({ color: css("--accent"), lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false }).setData(series(I.macd.line));
+  mc.addLineSeries({ color: css("--c-sma20"), lineWidth: 1.2, priceLineVisible: false, lastValueVisible: false }).setData(series(I.macd.signal));
+
+  charts = [main, rc, mc];
+  [rc, mc].forEach(c => c.applyOptions({ timeScale: { visible: false }, layout: { attributionLogo: false } }));
+  let syncing = false;
+  charts.forEach(src => src.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (syncing || !range) return; syncing = true;
+    charts.forEach(c => c !== src && c.timeScale().setVisibleLogicalRange(range));
+    syncing = false;
+  }));
+  setRange(I.c.length, S.chartPrefs.range);
+}
+
+function priceAlertSheet(t) {
+  sheet(`
+    <h3>Alertes de prix · ${esc(t.nom)}</h3>
+    <p class="note">Tu reçois une notification quand le cours franchit un de ces seuils. Cours actuel : <b>${money(t.prix, t.devise)}</b>.</p>
+    <div class="grid2">
+      <div><label class="f" for="ah">Si le cours monte au-dessus de</label><input class="f num" id="ah" inputmode="decimal" placeholder="${esc(String(t.niveaux && t.niveaux.resistance || ""))}"></div>
+      <div><label class="f" for="ab">Si le cours descend sous</label><input class="f num" id="ab" inputmode="decimal" placeholder="${esc(String(t.niveaux && t.niveaux.stop ? Math.round(t.niveaux.stop * 100) / 100 : ""))}"></div>
+    </div>
+    <p class="note">Suggestions en gris : la résistance et le stop suiveur. Laisse vide pour aucune alerte.</p>
+    <div id="aout"></div>
+    <div class="btns"><button class="btn primary" id="asave">Enregistrer</button><button class="btn" id="acancel">Annuler</button></div>`,
+  async (el, close) => {
+    el.querySelector("#acancel").onclick = close;
+    if (canEdit()) {
+      try {
+        const f = await gh(`contents/${WL_PATH}?ref=${encodeURIComponent(S.cfg.branch || "main")}`);
+        const w = (JSON.parse(b64dec(f.content)).titres || []).find(x => x.symbole === t.symbole) || {};
+        if (w.alerte_haut) el.querySelector("#ah").value = w.alerte_haut;
+        if (w.alerte_bas) el.querySelector("#ab").value = w.alerte_bas;
+      } catch {}
+    }
+    el.querySelector("#asave").onclick = async () => {
+      const read = id => { const x = parseFloat(el.querySelector(id).value.replace(",", ".")); return x > 0 ? x : null; };
+      const hi = read("#ah"), lo = read("#ab");
+      if (!canEdit()) {
+        const e = { symbole: t.symbole, nom: t.nom }; if (hi) e.alerte_haut = hi; if (lo) e.alerte_bas = lo;
+        el.querySelector("#aout").innerHTML = manualEdit(`Remplace la ligne de ${esc(t.symbole)} par :`, JSON.stringify(e));
+        return;
+      }
+      try {
+        await editWatchlist(wl => {
+          const w = wl.titres.find(x => x.symbole === t.symbole); if (!w) return;
+          delete w.alerte_haut; delete w.alerte_bas;
+          if (hi) w.alerte_haut = hi; if (lo) w.alerte_bas = lo;
+        }, `bourse : alertes de prix ${t.symbole}`);
+        close(); toast("Alertes enregistrées.");
+      } catch (e) { toast("GitHub a refusé : " + e.message, 6000); }
+    };
+  });
+}
+
+/* ================= Alertes ================= */
+function viewAlerts(v) {
+  const list = ((S.alertes && S.alertes.envoyees) || []).slice().reverse().slice(0, 100);
+  v.innerHTML = `
+    <div class="card pad">
+      <b>Recevoir les alertes sur ton téléphone</b>
+      <p class="note" style="margin:6px 0 0">Le robot vérifie les cours toutes les 30 minutes en semaine, même appli fermée, et t'envoie une notification à chaque nouveau signal d'achat ou de vente, ou quand un seuil de prix est franchi. Installe l'appli gratuite <b>ntfy</b> et abonne-toi à ton canal (voir Réglages).</p>
+    </div>
+    <h2>Historique des alertes</h2>
+    <div class="card">${list.length ? `<ul class="list">${list.map(a => `<li><a class="item" href="#/titre/${encodeURIComponent(a.symbole)}">
+      <div class="name">${a.side === "buy" ? "▲" : a.side === "sell" ? "▼" : "◆"} ${esc(a.nom)}</div>
+      <div class="right"><span class="chip ${a.side === "price" ? "" : a.side}">${a.side === "buy" ? "Achat" : a.side === "sell" ? "Vente" : "Prix"}</span></div>
+      <div class="sub" style="white-space:normal">${esc(a.label)} · ${money(a.prix, (titre(a.symbole) || {}).devise)}</div>
+      <div class="right sub">${ago(a.date)}</div></a></li>`).join("")}</ul>`
+      : `<div class="empty">Aucune alerte envoyée pour l'instant.</div>`}</div>`;
+}
+
+/* ================= Réglages ================= */
+function viewSettings(v) {
+  const c = S.cfg;
+  v.innerHTML = `
+    <h2>Notifications sur le téléphone</h2>
+    <div class="card pad">
+      <ol class="steps">
+        <li>Installe l'appli gratuite <b>ntfy</b> (Play Store ou App Store).</li>
+        <li>Invente un nom de canal difficile à deviner, par exemple <code>${esc(c.topicIdea || (c.topicIdea = "bourse-" + Math.random().toString(36).slice(2, 10)))}</code>. Dans ntfy : <b>+</b> → ce nom → <b>S'abonner</b>.</li>
+        <li>Sur GitHub, dans ton dépôt : <b>Settings → Secrets and variables → Actions → New repository secret</b>. Nom : <code>NTFY_TOPIC</code>, valeur : le nom du canal.</li>
+      </ol>
+      <p class="note">Garde ce nom secret : quiconque le connaît peut lire tes alertes.</p>
+    </div>
+
+    <h2>Modifier la liste depuis l'appli</h2>
+    <div class="card pad">
+      <p class="note" style="margin-top:0">Facultatif. Avec un jeton GitHub, tu ajoutes des titres et des alertes de prix directement ici. Crée-le sur GitHub : <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens</b>, limité à ce dépôt, avec <b>Contents : Read and write</b>.</p>
+      <div class="grid2">
+        <div><label class="f" for="go">Compte GitHub</label><input class="f" id="go" value="${esc(c.owner)}" autocapitalize="off"></div>
+        <div><label class="f" for="gr">Dépôt</label><input class="f" id="gr" value="${esc(c.repo)}" autocapitalize="off"></div>
+      </div>
+      <label class="f" for="gt">Jeton</label>
+      <input class="f" id="gt" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off">
+      <p class="note">Le jeton reste dans ce navigateur. Ne l'enregistre pas sur un appareil partagé.</p>
+      <div class="btns"><button class="btn primary" id="gsave">Enregistrer</button>${c.token ? `<button class="btn danger" id="gforget">Oublier le jeton</button>` : ""}</div>
+    </div>
+
+    <h2>Sauvegarde de mes positions</h2>
+    <div class="card pad">
+      <p class="note" style="margin-top:0">Tes positions sont enregistrées sur cet appareil seulement. Copie ce code pour les retrouver sur un autre appareil ou après avoir vidé le navigateur.</p>
+      <textarea class="f num" id="bk" rows="3" style="font-size:12px">${esc(b64enc(JSON.stringify(S.positions)))}</textarea>
+      <div class="btns"><button class="btn" id="bcopy">Copier</button><button class="btn" id="bimp">Importer un code</button></div>
+    </div>
+
+    <h2>Apparence</h2>
+    <div class="card pad"><div class="seg" id="theme">${[["auto", "Automatique"], ["light", "Clair"], ["dark", "Sombre"]].map(([k, l]) => `<button data-k="${k}" class="${(LS.get("theme", "auto")) === k ? "on" : ""}">${l}</button>`).join("")}</div></div>
+
+    <h2>À savoir</h2>
+    <div class="card pad note">
+      Les signaux viennent uniquement de l'analyse technique (moyennes mobiles, RSI, MACD, bandes de Bollinger, cassures de supports et résistances, stop suiveur). Ils ne tiennent compte ni des résultats des entreprises, ni de l'actualité, ni de ta situation. Ce n'est pas un conseil en investissement. Données : Yahoo Finance, en différé possible selon la place.
+      Graphiques : <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener">TradingView Lightweight Charts</a>.
+    </div>`;
+  saveCfg();
+  $("#gsave").onclick = () => {
+    S.cfg.owner = $("#go").value.trim(); S.cfg.repo = $("#gr").value.trim(); S.cfg.token = $("#gt").value.trim();
+    saveCfg(); toast("Réglages enregistrés."); render();
+  };
+  const fg = $("#gforget"); if (fg) fg.onclick = () => { S.cfg.token = ""; saveCfg(); render(); };
+  $("#bcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText($("#bk").value).then(() => toast("Code copié.")); };
+  $("#bimp").onclick = () => {
+    const code = prompt("Colle ici le code de sauvegarde :"); if (!code) return;
+    try {
+      const arr = JSON.parse(b64dec(code.trim()));
+      if (!Array.isArray(arr)) throw 0;
+      if (!confirm(`Remplacer tes ${S.positions.length} achats par les ${arr.length} du code ?`)) return;
+      S.positions = arr; savePositions(); toast("Positions importées."); render();
+    } catch { toast("Code invalide."); }
+  };
+  $("#theme").onclick = e => { const k = e.target.dataset.k; if (!k) return; LS.set("theme", k); applyTheme(); render(); };
+}
+function applyTheme() {
+  const k = LS.get("theme", "auto");
+  if (k === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = k;
+}
+
+/* ================= Démarrage ================= */
+applyTheme();
+render();
+loadIndex().then(render).catch(e => { $("#view").innerHTML = `<div class="card empty">Impossible de charger les cours (${esc(e.message)}).<br>Le robot a-t-il déjà tourné ? Voir LISEZMOI.</div>`; });
+setInterval(() => { if (document.visibilityState === "visible" && route().tab !== "titre") loadIndex().then(render).catch(() => {}); }, 5 * 60 * 1000);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => route().tab === "titre" && render());
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
