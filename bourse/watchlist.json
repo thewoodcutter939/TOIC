@@ -1,0 +1,10 @@
+{
+  "titres": [
+    { "symbole": "CW8.PA", "nom": "Amundi MSCI World (ETF)" },
+    { "symbole": "AIR.PA", "nom": "Airbus" },
+    { "symbole": "MC.PA", "nom": "LVMH" },
+    { "symbole": "TTE.PA", "nom": "TotalEnergies" },
+    { "symbole": "AAPL", "nom": "Apple" },
+    { "symbole": "BTC-EUR", "nom": "Bitcoin" }
+  ]
+}
